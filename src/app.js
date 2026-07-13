@@ -2,7 +2,9 @@ const path = require('path');
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
 const env = require('./config/env');
+const pgPool = require('./lib/pgPool');
 
 const authRoutes = require('./routes/auth.routes');
 const personasRoutes = require('./routes/personas.routes');
@@ -19,6 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(
   session({
+    store: new pgSession({ pool: pgPool, tableName: 'session', createTableIfMissing: true }),
     secret: env.sessionSecret,
     resave: false,
     saveUninitialized: false,

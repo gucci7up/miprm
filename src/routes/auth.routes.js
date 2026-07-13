@@ -1,6 +1,12 @@
 const router = require('express').Router();
+const authController = require('../controllers/auth.controller');
+const { requireAuth } = require('../middleware/auth.middleware');
+const { loginLimiter } = require('../middleware/rateLimit.middleware');
 
-// TODO: implementar en la Fase 3 (API REST) una vez confirmado el esquema de BD
-router.get('/_status', (req, res) => res.json({ module: 'auth', status: 'pending' }));
+router.post('/registro', authController.postRegistro);
+router.post('/login', loginLimiter, authController.postLogin);
+router.post('/logout', requireAuth, authController.postLogout);
+router.post('/reset-password', loginLimiter, authController.postResetPassword);
+router.get('/sesion', requireAuth, authController.getSesionActual);
 
 module.exports = router;
