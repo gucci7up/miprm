@@ -18,9 +18,131 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ---- Modelos nuevos de MIPRM se agregan aqui en la Fase 2 ----
-// model Militante { ... }
-// model ComiteAfectivo { ... }
-// model ComiteMiembro { ... }
-// model ComiteActividad { ... }
-// model ValidacionIdentidad { ... }
+enum EstadoMilitante {
+  REGISTRADO // se inscribio pero aun no ha iniciado el proceso de validacion
+  PENDIENTE_VALIDACION // ya subio fotos de cedula/selfie, esperando aprobacion admin
+  VALIDADO // identidad aprobada por un admin
+}
+
+enum RolComite {
+  PRESIDENTE
+  SECRETARIO
+  MIEMBRO
+}
+
+enum EstadoValidacion {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+}
+
+enum RolGlobal {
+  MILITANTE // usuario normal, sin acceso al panel admin
+  ADMIN // acceso al panel administrativo (aprobar validaciones, exportar, estadisticas)
+}
+
+model Militante {
+  id               Int             @id @default(autoincrement())
+  cedula           String          @unique @db.VarChar(11)
+  nombres          String
+  apellidos        String
+  alias            String?
+  rolGlobal        RolGlobal       @default(MILITANTE)
+  telefono         String
+  whatsapp         String?
+  motivacion       String?
+  email            String?
+  emailConfirmado  Boolean         @default(false)
+  calle            String?
+  numeroCasa       String?
+  sector           String?
+  contactoNombre   String?
+  contactoTelefono String?
+  passwordHash     String
+  estado           EstadoMilitante @default(REGISTRADO)
+  fechaNacimiento  DateTime?       @db.Date
+  registradoPorId  Int? // si fue afiliado por otro militante (registro asistido)
+  registradoPor    Militante?      @relation("AfiliacionAsistida", fields: [registradoPorId], references: [id])
+  afiliados        Militante[]     @relation("AfiliacionAsistida")
+  ultimoAcceso     DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  comitesPresididos ComiteAfectivo[]      @relation("PresidenteComite")
+  membresias        ComiteMiembro[]
+  validaciones      ValidacionIdentidad[]
+
+  @@map("militantes")
+}
+
+model ComiteAfectivo {
+  id              Int       @id @default(autoincrement())
+  nombre          String
+  // Municipio/provincia viven en el SQL Server externo (solo lectura);
+  // se guarda una copia (id + nombre) para no depender de una query cruzada
+  // cada vez que se lista/muestra un comite.
+  municipioId     Int
+  municipioNombre String
+  provinciaNombre String?
+  logo            String?
+  activo          Boolean   @default(true)
+  presidenteId    Int
+  presidente      Militante @relation("PresidenteComite", fields: [presidenteId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  miembros    ComiteMiembro[]
+  actividades ComiteActividad[]
+
+  @@index([municipioId])
+  @@map("comites_afectivos")
+}
+
+model ComiteMiembro {
+  id              Int            @id @default(autoincrement())
+  comiteId        Int
+  comite          ComiteAfectivo @relation(fields: [comiteId], references: [id], onDelete: Cascade)
+  militanteId     Int
+  militante       Militante      @relation(fields: [militanteId], references: [id], onDelete: Cascade)
+  rol             RolComite
+  fechaAsignacion DateTime       @default(now())
+
+  // Un militante no puede repetirse en el mismo comite.
+  @@unique([comiteId, militanteId])
+  // Regla de negocio "solo 1 comite adicional con rol Secretario/Miembro" se
+  // valida en el backend (ver src/services/comites/comiteMiembro.service.js);
+  // ademas se refuerza con un indice unico parcial creado a mano en la
+  // migracion SQL (solo permite una fila con rol IN (SECRETARIO, MIEMBRO)
+  // por militante, sin importar el comite).
+  @@map("comite_miembros")
+}
+
+model ComiteActividad {
+  id          Int            @id @default(autoincrement())
+  comiteId    Int
+  comite      ComiteAfectivo @relation(fields: [comiteId], references: [id], onDelete: Cascade)
+  nombre      String
+  descripcion String?
+  fechaInicio DateTime
+  fechaFin    DateTime
+  imagen      String?
+  createdAt   DateTime       @default(now())
+
+  @@map("comite_actividades")
+}
+
+model ValidacionIdentidad {
+  id               Int              @id @default(autoincrement())
+  militanteId      Int
+  militante        Militante        @relation(fields: [militanteId], references: [id], onDelete: Cascade)
+  fotoCedulaFrente String
+  fotoCedulaDorso  String
+  selfie           String
+  estado           EstadoValidacion @default(PENDIENTE)
+  revisadoPorAdmin String? // usuario/id del admin que reviso (panel admin, fuera de alcance de este modelo aun)
+  comentario       String?
+  fechaSolicitud   DateTime         @default(now())
+  fechaResolucion  DateTime?
+
+  @@map("validaciones_identidad")
+}

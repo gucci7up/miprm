@@ -12,6 +12,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
+    "inspect:padron": "node scripts/inspect-padron-schema.js",
     "test": "jest --runInBand"
   },
   "dependencies": {
