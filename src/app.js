@@ -13,6 +13,11 @@ const adminRoutes = require('./routes/admin.routes');
 
 const app = express();
 
+// Necesario detras de Traefik/Nginx: sin esto, Express nunca ve la conexion
+// como HTTPS (aunque el usuario si entro por HTTPS), y con cookie.secure=true
+// eso hace que la cookie de sesion nunca se envie.
+app.set('trust proxy', 1);
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '..', 'views'));
 
