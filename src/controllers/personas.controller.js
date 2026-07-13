@@ -1,6 +1,7 @@
 const personaService = require('../services/personas/persona.service');
 const padronService = require('../services/padron/padronService');
 const authService = require('../services/auth/auth.service');
+const validacionService = require('../services/validaciones/validacion.service');
 const { esCedulaValida, normalizarCedula } = require('../utils/cedula');
 
 /** "Consultate": GET /personas/consultar?cedula=X&fechaNacimiento=YYYY-MM-DD */
@@ -93,4 +94,50 @@ async function postAfiliar(req, res, next) {
   }
 }
 
-module.exports = { getConsultar, putPerfil, getPadron, postAfiliar };
+/**
+ * POST /personas/validacion — sube foto de cedula (frente/dorso) + selfie.
+ * Requiere multer.fields([{name:'cedulaFrente'},{name:'cedulaDorso'},{name:'selfie'}]).
+ */
+async function postValidacion(req, res, next) {
+  try {
+    const archivos = req.files || {};
+    const cedulaFrente = archivos.cedulaFrente && archivos.cedulaFrente[0];
+    const cedulaDorso = archivos.cedulaDorso && archivos.cedulaDorso[0];
+    const selfie = archivos.selfie && archivos.selfie[0];
+
+    if (!cedulaFrente || !cedulaDorso || !selfie) {
+      return res.status(400).json({ error: 'Se requieren las 3 fotos: cedula frente, cedula dorso y selfie' });
+    }
+
+    const validacion = await validacionService.crearSolicitud(req.session.militanteId, {
+      fotoCedulaFrente: cedulaFrente.buffer,
+      fotoCedulaFrenteMimeType: cedulaFrente.mimetype,
+      fotoCedulaDorso: cedulaDorso.buffer,
+      fotoCedulaDorsoMimeType: cedulaDorso.mimetype,
+      selfie: selfie.buffer,
+      selfieMimeType: selfie.mimetype,
+    });
+
+    return res.status(201).json({
+      message: 'Solicitud de validacion enviada. Un administrador la revisara en las proximas 24-48h.',
+      validacion: { id: validacion.id, estado: validacion.estado, fechaSolicitud: validacion.fechaSolicitud },
+    });
+  } catch (err) {
+    if (err instanceof validacionService.ValidacionYaExisteError) {
+      return res.status(409).json({ error: err.message });
+    }
+    next(err);
+  }
+}
+
+/** GET /personas/validacion — estado de la ultima solicitud del propio militante. */
+async function getValidacion(req, res, next) {
+  try {
+    const validacion = await validacionService.obtenerUltimaSolicitud(req.session.militanteId);
+    return res.json({ validacion: validacion || null });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getConsultar, putPerfil, getPadron, postAfiliar, postValidacion, getValidacion };
