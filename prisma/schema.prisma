@@ -1,0 +1,26 @@
+// Esquema Prisma para MIPRM
+//
+// Esta base (PostgreSQL) contiene SOLO las tablas nuevas propias de MIPRM
+// (militantes, comites_afectivos, etc.), gestionadas con `npm run prisma:migrate`.
+//
+// La base de personas/padron y division territorial vive en un SQL Server
+// EXTERNO de solo lectura (nombres de servidor/BD en variables de entorno,
+// ver .env.example) y NO se modela aqui: se consulta con el paquete 'mssql'
+// desde src/services/padron/ (ver src/lib/sqlserver.js), porque Prisma no
+// puede modelar una base distinta a la definida en el datasource de abajo.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---- Modelos nuevos de MIPRM se agregan aqui en la Fase 2 ----
+// model Militante { ... }
+// model ComiteAfectivo { ... }
+// model ComiteMiembro { ... }
+// model ComiteActividad { ... }
+// model ValidacionIdentidad { ... }
