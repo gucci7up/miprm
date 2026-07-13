@@ -4,12 +4,6 @@ node_modules
 !.env.example
 .git
 .gitignore
-uploads/*
-!uploads/.gitkeep
-!uploads/cedulas/.gitkeep
-!uploads/selfies/.gitkeep
-!uploads/logos/.gitkeep
-!uploads/actividades/.gitkeep
 tests
 coverage
 *.log

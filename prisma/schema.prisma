@@ -84,7 +84,8 @@ model ComiteAfectivo {
   municipioId     Int
   municipioNombre String
   provinciaNombre String?
-  logo            String?
+  logo            Bytes?
+  logoMimeType    String?
   activo          Boolean   @default(true)
   presidenteId    Int
   presidente      Militante @relation("PresidenteComite", fields: [presidenteId], references: [id])
@@ -118,31 +119,35 @@ model ComiteMiembro {
 }
 
 model ComiteActividad {
-  id          Int            @id @default(autoincrement())
-  comiteId    Int
-  comite      ComiteAfectivo @relation(fields: [comiteId], references: [id], onDelete: Cascade)
-  nombre      String
-  descripcion String?
-  fechaInicio DateTime
-  fechaFin    DateTime
-  imagen      String?
-  createdAt   DateTime       @default(now())
+  id             Int            @id @default(autoincrement())
+  comiteId       Int
+  comite         ComiteAfectivo @relation(fields: [comiteId], references: [id], onDelete: Cascade)
+  nombre         String
+  descripcion    String?
+  fechaInicio    DateTime
+  fechaFin       DateTime
+  imagen         Bytes?
+  imagenMimeType String?
+  createdAt      DateTime       @default(now())
 
   @@map("comite_actividades")
 }
 
 model ValidacionIdentidad {
-  id               Int              @id @default(autoincrement())
-  militanteId      Int
-  militante        Militante        @relation(fields: [militanteId], references: [id], onDelete: Cascade)
-  fotoCedulaFrente String
-  fotoCedulaDorso  String
-  selfie           String
-  estado           EstadoValidacion @default(PENDIENTE)
-  revisadoPorAdmin String? // usuario/id del admin que reviso (panel admin, fuera de alcance de este modelo aun)
-  comentario       String?
-  fechaSolicitud   DateTime         @default(now())
-  fechaResolucion  DateTime?
+  id                       Int              @id @default(autoincrement())
+  militanteId              Int
+  militante                Militante        @relation(fields: [militanteId], references: [id], onDelete: Cascade)
+  fotoCedulaFrente         Bytes
+  fotoCedulaFrenteMimeType String
+  fotoCedulaDorso          Bytes
+  fotoCedulaDorsoMimeType  String
+  selfie                   Bytes
+  selfieMimeType           String
+  estado                   EstadoValidacion @default(PENDIENTE)
+  revisadoPorAdmin         String? // usuario/id del admin que reviso (panel admin, fuera de alcance de este modelo aun)
+  comentario               String?
+  fechaSolicitud           DateTime         @default(now())
+  fechaResolucion          DateTime?
 
   @@map("validaciones_identidad")
 }

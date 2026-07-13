@@ -21,8 +21,6 @@ COPY . .
 # (prisma CLI, jest, nodemon, etc.) del node_modules final.
 RUN npx prisma generate && npm prune --omit=dev
 
-RUN mkdir -p uploads/cedulas uploads/selfies uploads/logos uploads/actividades
-
 ENV NODE_ENV=production
 EXPOSE 3000
 

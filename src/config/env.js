@@ -14,8 +14,8 @@ module.exports = {
   sessionSecret: required('SESSION_SECRET'),
   jwtExpiresIn: required('JWT_EXPIRES_IN', '7d'),
 
-  storageDriver: required('STORAGE_DRIVER', 'local'),
-  uploadsDir: required('UPLOADS_DIR', './uploads'),
+  // Las fotos (logo, actividades, validacion de identidad) se guardan como
+  // BLOB en Postgres, no en disco; este limite se aplica en la config de multer.
   maxUploadMb: parseInt(required('MAX_UPLOAD_MB', '5'), 10),
 
   smtp: {
