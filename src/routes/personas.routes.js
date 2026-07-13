@@ -20,4 +20,7 @@ router.post(
 );
 router.get('/validacion', requireAuth, personasController.getValidacion);
 
+router.get('/catalogos/provincias', requireAuth, personasController.getProvincias);
+router.get('/catalogos/municipios', requireAuth, personasController.getMunicipios);
+
 module.exports = router;

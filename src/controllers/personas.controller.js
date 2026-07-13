@@ -140,4 +140,36 @@ async function getValidacion(req, res, next) {
   }
 }
 
-module.exports = { getConsultar, putPerfil, getPadron, postAfiliar, postValidacion, getValidacion };
+/** GET /personas/catalogos/provincias — para el selector de creacion de comite. */
+async function getProvincias(req, res, next) {
+  try {
+    const provincias = await padronService.listarProvincias();
+    return res.json({ provincias });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** GET /personas/catalogos/municipios?provinciaId=X */
+async function getMunicipios(req, res, next) {
+  try {
+    const provinciaId = parseInt(req.query.provinciaId, 10);
+    if (!provinciaId) return res.status(400).json({ error: 'provinciaId es obligatorio' });
+
+    const municipios = await padronService.listarMunicipiosPorProvincia(provinciaId);
+    return res.json({ municipios });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  getConsultar,
+  putPerfil,
+  getPadron,
+  postAfiliar,
+  postValidacion,
+  getValidacion,
+  getProvincias,
+  getMunicipios,
+};
