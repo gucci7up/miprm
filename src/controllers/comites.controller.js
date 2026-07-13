@@ -4,11 +4,9 @@ const comiteActividadService = require('../services/comites/comiteActividad.serv
 
 async function postComite(req, res, next) {
   try {
-    const { nombre, municipioId, municipioNombre, provinciaNombre, presidenteCedula, presidenteFechaNacimiento } = req.body;
-    if (!nombre || !municipioId || !municipioNombre || !presidenteCedula || !presidenteFechaNacimiento) {
-      return res
-        .status(400)
-        .json({ error: 'Nombre, municipio, cedula y fecha de nacimiento del presidente son obligatorios' });
+    const { nombre, municipioId, municipioNombre, provinciaNombre } = req.body;
+    if (!nombre || !municipioId || !municipioNombre) {
+      return res.status(400).json({ error: 'Nombre y municipio son obligatorios' });
     }
 
     const logoFile = req.file;
@@ -17,16 +15,30 @@ async function postComite(req, res, next) {
       municipioId: parseInt(municipioId, 10),
       municipioNombre,
       provinciaNombre,
-      presidenteCedula,
-      presidenteFechaNacimiento,
       logo: logoFile ? logoFile.buffer : null,
       logoMimeType: logoFile ? logoFile.mimetype : null,
     });
 
     return res.status(201).json({ comite: { ...comite, logo: undefined } });
   } catch (err) {
+    next(err);
+  }
+}
+
+/** PUT /comites/:id/presidente — asigna o reemplaza al presidente (digitador/admin). */
+async function putPresidente(req, res, next) {
+  try {
+    const comiteId = parseInt(req.params.id, 10);
+    const { cedula, fechaNacimiento } = req.body;
+    if (!cedula || !fechaNacimiento) {
+      return res.status(400).json({ error: 'Cedula y fecha de nacimiento son obligatorias' });
+    }
+
+    const comite = await comiteService.asignarPresidente(comiteId, { cedula, fechaNacimiento });
+    return res.json({ comite: { ...comite, logo: undefined } });
+  } catch (err) {
     if (err instanceof comiteMiembroService.MilitanteNoEncontradoError) {
-      return res.status(404).json({ error: 'No se encontro un militante registrado con esa cedula y fecha de nacimiento para ser presidente' });
+      return res.status(404).json({ error: 'No se encontro un militante registrado con esa cedula y fecha de nacimiento' });
     }
     next(err);
   }
@@ -204,6 +216,7 @@ async function getActividadImagen(req, res, next) {
 
 module.exports = {
   postComite,
+  putPresidente,
   getComite,
   getLogo,
   putInfoGeneral,

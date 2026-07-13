@@ -12,6 +12,8 @@ router.get('/mis-comites', requireAuth, comitesController.getMisComites);
 router.get('/:id', requireAuth, comitesController.getComite);
 router.get('/:id/logo', comitesController.getLogo);
 router.put('/:id', requireAuth, requireComitePresidente, upload.single('logo'), comitesController.putInfoGeneral);
+// Asignar/reemplazar presidente: igual que "asignar coordinador", tarea de digitador/admin.
+router.put('/:id/presidente', requireDigitadorOAdmin, comitesController.putPresidente);
 
 router.get('/:id/miembros', requireAuth, requireComiteMiembro, comitesController.getMiembros);
 router.post('/:id/miembros', requireAuth, requireComiteGestor, comitesController.postMiembro);

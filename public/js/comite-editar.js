@@ -4,6 +4,9 @@ const ROL_TEXTO = { PRESIDENTE: 'Presidente', SECRETARIO: 'Secretario', MIEMBRO:
 let miMilitanteId = null;
 let esPresidente = false;
 let esGestor = false;
+let esDigitadorOAdmin = false;
+let ultimoComite = null;
+let ultimosMiembros = [];
 
 function formatearFecha(iso) {
   return iso ? new Date(iso).toISOString().slice(0, 10) : '';
@@ -116,11 +119,14 @@ async function init() {
   try {
     const sesion = await api('/auth/sesion');
     miMilitanteId = sesion.militanteId;
+    esDigitadorOAdmin = ['DIGITADOR', 'ADMIN'].includes(sesion.rolGlobal);
 
     const { comite } = await api(`/comites/${comiteId}`);
+    ultimoComite = comite;
     esPresidente = comite.presidenteId === miMilitanteId;
 
     const { miembros } = await api(`/comites/${comiteId}/miembros`);
+    ultimosMiembros = miembros;
     const miMembresia = miembros.find((m) => m.militanteId === miMilitanteId);
     esGestor = esPresidente || (miMembresia && miMembresia.rol === 'SECRETARIO');
 
@@ -128,6 +134,13 @@ async function init() {
     const badge = document.getElementById('badge-activo');
     badge.textContent = comite.activo ? 'Activo' : 'Inactivo';
     badge.className = `badge ${comite.activo ? 'bg-success' : 'bg-secondary'}`;
+
+    document.getElementById('presidente-nombre').textContent = comite.presidente
+      ? `${comite.presidente.nombres} ${comite.presidente.apellidos} (${comite.presidente.cedula})`
+      : 'Sin asignar';
+    if (esDigitadorOAdmin) {
+      document.getElementById('btn-cambiar-presidente').classList.remove('d-none');
+    }
 
     document.getElementById('input-nombre').value = comite.nombre;
     document.getElementById('input-activo').checked = comite.activo;
@@ -197,6 +210,41 @@ document.getElementById('form-miembro').addEventListener('submit', async (ev) =>
   } catch (err) {
     mostrarError('alerta-error', err.message);
   }
+});
+
+document.getElementById('form-presidente').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  ocultarError('alerta-error');
+  const datos = Object.fromEntries(new FormData(ev.target).entries());
+  try {
+    await api(`/comites/${comiteId}/presidente`, { method: 'PUT', body: JSON.stringify(datos) });
+    bootstrap.Modal.getInstance(document.getElementById('modalPresidente'))?.hide();
+    ev.target.reset();
+    init();
+  } catch (err) {
+    mostrarError('alerta-error', err.message);
+  }
+});
+
+document.getElementById('btn-imprimir').addEventListener('click', () => {
+  if (!ultimoComite) return;
+
+  document.getElementById('print-nombre').textContent = ultimoComite.nombre;
+  document.getElementById('print-municipio').textContent =
+    `${ultimoComite.municipioNombre}${ultimoComite.provinciaNombre ? ', ' + ultimoComite.provinciaNombre : ''}`;
+  document.getElementById('print-fecha').textContent = formatearFecha(ultimoComite.createdAt);
+  document.getElementById('print-presidente').textContent = ultimoComite.presidente
+    ? `${ultimoComite.presidente.nombres} ${ultimoComite.presidente.apellidos} (${ultimoComite.presidente.cedula})`
+    : 'Sin asignar';
+  document.getElementById('print-miembros').innerHTML = ultimosMiembros
+    .map((m) => `<tr><td>${m.militante.nombres} ${m.militante.apellidos}</td><td>${m.militante.cedula}</td><td>${ROL_TEXTO[m.rol] || m.rol}</td></tr>`)
+    .join('');
+
+  const original = document.body.innerHTML;
+  document.body.innerHTML = `<div style="padding:20px;">${document.getElementById('seccion-imprimir').innerHTML}</div>`;
+  window.print();
+  document.body.innerHTML = original;
+  window.location.reload();
 });
 
 init();
