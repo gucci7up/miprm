@@ -50,4 +50,27 @@ async function requireValidado(req, res, next) {
   }
 }
 
-module.exports = { requireAuth, requireAdmin, requireValidado };
+/**
+ * El sistema opera con formularios fisicos: un digitador transcribe los
+ * datos (registrar militantes, crear comites). ADMIN puede hacer todo lo
+ * que hace un digitador, ademas de aprobar validaciones/exportar/estadisticas.
+ */
+async function requireDigitadorOAdmin(req, res, next) {
+  if (!req.session || !req.session.militanteId) {
+    return res.status(401).json({ error: 'No autenticado' });
+  }
+  try {
+    const militante = await prisma.militante.findUnique({
+      where: { id: req.session.militanteId },
+      select: { rolGlobal: true },
+    });
+    if (!militante || !['DIGITADOR', 'ADMIN'].includes(militante.rolGlobal)) {
+      return res.status(403).json({ error: 'Requiere rol de digitador o administrador' });
+    }
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { requireAuth, requireAdmin, requireValidado, requireDigitadorOAdmin };

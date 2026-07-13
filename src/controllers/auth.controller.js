@@ -1,40 +1,6 @@
 const authService = require('../services/auth/auth.service');
 const { esCedulaValida } = require('../utils/cedula');
 
-async function postRegistro(req, res, next) {
-  try {
-    const { cedula, nombres, apellidos, telefono, email, confirmarEmail } = req.body;
-
-    if (!esCedulaValida(cedula)) {
-      return res.status(400).json({ error: 'La cedula debe tener 11 digitos' });
-    }
-    if (!nombres || !apellidos || !telefono) {
-      return res.status(400).json({ error: 'Nombres, apellidos y telefono son obligatorios' });
-    }
-    if (email && email !== confirmarEmail) {
-      return res.status(400).json({ error: 'El correo y su confirmacion no coinciden' });
-    }
-
-    const militante = await authService.registrarMilitante(req.body);
-
-    return res.status(201).json({
-      message: 'Registro exitoso. Revisa tu correo o telefono para tu contrasena de acceso.',
-      militante: {
-        id: militante.id,
-        cedula: militante.cedula,
-        nombres: militante.nombres,
-        apellidos: militante.apellidos,
-        estado: militante.estado,
-      },
-    });
-  } catch (err) {
-    if (err instanceof authService.CedulaDuplicadaError) {
-      return res.status(409).json({ error: err.message });
-    }
-    next(err);
-  }
-}
-
 async function postLogin(req, res, next) {
   try {
     const { cedula, password } = req.body;
@@ -103,4 +69,4 @@ async function getSesionActual(req, res) {
   });
 }
 
-module.exports = { postRegistro, postLogin, postLogout, postResetPassword, getSesionActual };
+module.exports = { postLogin, postLogout, postResetPassword, getSesionActual };

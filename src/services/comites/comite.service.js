@@ -1,6 +1,27 @@
 const prisma = require('../../lib/prisma');
+const { normalizarCedula } = require('../../utils/cedula');
+const { MilitanteNoEncontradoError } = require('./comiteMiembro.service');
 
-async function crearComite({ nombre, municipioId, municipioNombre, provinciaNombre, presidenteId, logo, logoMimeType }) {
+/**
+ * El comite nace de un formulario fisico que un digitador transcribe: el
+ * presidente es una persona real identificada por cedula + fecha de
+ * nacimiento (ya debe existir como militante registrado), no
+ * necesariamente quien esta usando el sistema en ese momento.
+ */
+async function crearComite({ nombre, municipioId, municipioNombre, provinciaNombre, presidenteCedula, presidenteFechaNacimiento, logo, logoMimeType }) {
+  const presidente = await prisma.militante.findUnique({
+    where: { cedula: normalizarCedula(presidenteCedula) },
+  });
+
+  const fechaCoincide =
+    presidente &&
+    presidente.fechaNacimiento &&
+    presidente.fechaNacimiento.toISOString().slice(0, 10) === new Date(presidenteFechaNacimiento).toISOString().slice(0, 10);
+
+  if (!presidente || !fechaCoincide) {
+    throw new MilitanteNoEncontradoError();
+  }
+
   return prisma.$transaction(async (tx) => {
     const comite = await tx.comiteAfectivo.create({
       data: {
@@ -8,7 +29,7 @@ async function crearComite({ nombre, municipioId, municipioNombre, provinciaNomb
         municipioId,
         municipioNombre,
         provinciaNombre: provinciaNombre || null,
-        presidenteId,
+        presidenteId: presidente.id,
         logo: logo || null,
         logoMimeType: logoMimeType || null,
       },
@@ -17,7 +38,7 @@ async function crearComite({ nombre, municipioId, municipioNombre, provinciaNomb
     // El presidente tambien queda registrado en comite_miembros, para que
     // las consultas de "mis membresias" tengan una sola fuente de verdad.
     await tx.comiteMiembro.create({
-      data: { comiteId: comite.id, militanteId: presidenteId, rol: 'PRESIDENTE' },
+      data: { comiteId: comite.id, militanteId: presidente.id, rol: 'PRESIDENTE' },
     });
 
     return comite;

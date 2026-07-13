@@ -3,6 +3,7 @@
   const navInvitado = document.getElementById('nav-invitado');
   const navSesion = document.getElementById('nav-sesion');
   const navAdmin = document.getElementById('nav-admin');
+  const navDigitador = document.getElementById('nav-digitador');
   const logoutBtn = document.getElementById('btn-logout');
 
   try {
@@ -10,6 +11,7 @@
     if (navInvitado) navInvitado.classList.add('d-none');
     if (navSesion) navSesion.classList.remove('d-none');
     if (navAdmin && sesion.rolGlobal === 'ADMIN') navAdmin.classList.remove('d-none');
+    if (navDigitador && ['DIGITADOR', 'ADMIN'].includes(sesion.rolGlobal)) navDigitador.classList.remove('d-none');
   } catch (e) {
     if (navInvitado) navInvitado.classList.remove('d-none');
     if (navSesion) navSesion.classList.add('d-none');

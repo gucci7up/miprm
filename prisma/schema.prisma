@@ -37,8 +37,9 @@ enum EstadoValidacion {
 }
 
 enum RolGlobal {
-  MILITANTE // usuario normal, sin acceso al panel admin
-  ADMIN // acceso al panel administrativo (aprobar validaciones, exportar, estadisticas)
+  MILITANTE // usuario normal, sin acceso a paneles de gestion
+  DIGITADOR // transcribe formularios fisicos: registra militantes y crea comites
+  ADMIN // todo lo de digitador + aprobar validaciones, exportar, estadisticas
 }
 
 model Militante {

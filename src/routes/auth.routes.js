@@ -3,7 +3,8 @@ const authController = require('../controllers/auth.controller');
 const { requireAuth } = require('../middleware/auth.middleware');
 const { loginLimiter } = require('../middleware/rateLimit.middleware');
 
-router.post('/registro', authController.postRegistro);
+// No hay auto-registro publico: el registro de militantes se hace via
+// formulario fisico transcrito por un digitador (ver POST /personas/afiliar).
 router.post('/login', loginLimiter, authController.postLogin);
 router.post('/logout', requireAuth, authController.postLogout);
 router.post('/reset-password', loginLimiter, authController.postResetPassword);

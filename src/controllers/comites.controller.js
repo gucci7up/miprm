@@ -4,9 +4,11 @@ const comiteActividadService = require('../services/comites/comiteActividad.serv
 
 async function postComite(req, res, next) {
   try {
-    const { nombre, municipioId, municipioNombre, provinciaNombre } = req.body;
-    if (!nombre || !municipioId || !municipioNombre) {
-      return res.status(400).json({ error: 'Nombre y municipio son obligatorios' });
+    const { nombre, municipioId, municipioNombre, provinciaNombre, presidenteCedula, presidenteFechaNacimiento } = req.body;
+    if (!nombre || !municipioId || !municipioNombre || !presidenteCedula || !presidenteFechaNacimiento) {
+      return res
+        .status(400)
+        .json({ error: 'Nombre, municipio, cedula y fecha de nacimiento del presidente son obligatorios' });
     }
 
     const logoFile = req.file;
@@ -15,13 +17,17 @@ async function postComite(req, res, next) {
       municipioId: parseInt(municipioId, 10),
       municipioNombre,
       provinciaNombre,
-      presidenteId: req.session.militanteId,
+      presidenteCedula,
+      presidenteFechaNacimiento,
       logo: logoFile ? logoFile.buffer : null,
       logoMimeType: logoFile ? logoFile.mimetype : null,
     });
 
     return res.status(201).json({ comite: { ...comite, logo: undefined } });
   } catch (err) {
+    if (err instanceof comiteMiembroService.MilitanteNoEncontradoError) {
+      return res.status(404).json({ error: 'No se encontro un militante registrado con esa cedula y fecha de nacimiento para ser presidente' });
+    }
     next(err);
   }
 }

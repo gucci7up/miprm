@@ -1,10 +1,11 @@
 const router = require('express').Router();
 const comitesController = require('../controllers/comites.controller');
-const { requireAuth } = require('../middleware/auth.middleware');
+const { requireAuth, requireDigitadorOAdmin } = require('../middleware/auth.middleware');
 const { requireComitePresidente, requireComiteGestor, requireComiteMiembro } = require('../middleware/comite.middleware');
 const upload = require('../middleware/upload.middleware');
 
-router.post('/', requireAuth, upload.single('logo'), comitesController.postComite);
+// El comite nace de un formulario fisico: solo digitador/admin lo dan de alta.
+router.post('/', requireDigitadorOAdmin, upload.single('logo'), comitesController.postComite);
 router.get('/', requireAuth, comitesController.getComites);
 router.get('/mis-comites', requireAuth, comitesController.getMisComites);
 
