@@ -4,8 +4,8 @@ const { normalizarCedula } = require('../../utils/cedula');
 class LimiteComiteAdicionalError extends Error {
   constructor() {
     super(
-      'Este militante ya pertenece a otro comite con rol de Secretario o Miembro. ' +
-        'Solo se permite un comite adicional a los que preside.'
+      'Este militante ya pertenece a otro comite con rol de Enlace o Miembro. ' +
+        'Solo se permite un comite adicional a los que coordina.'
     );
     this.name = 'LimiteComiteAdicionalError';
   }
@@ -25,11 +25,11 @@ class MilitanteNoEncontradoError extends Error {
   }
 }
 
-const ROLES_LIMITADOS = ['SECRETARIO', 'MIEMBRO'];
+const ROLES_LIMITADOS = ['ENLACE', 'MIEMBRO'];
 
 /**
- * Regla de negocio central: un militante puede presidir multiples comites,
- * pero solo puede pertenecer con rol Secretario o Miembro a UN comite
+ * Regla de negocio central: un militante puede coordinar multiples comites,
+ * pero solo puede pertenecer con rol Enlace o Miembro a UN comite
  * adicional en total (sin importar cual). Se valida aqui, en el backend,
  * no solo en el frontend.
  */
@@ -49,7 +49,7 @@ async function validarLimiteComiteAdicional(militanteId, comiteId, rol) {
   }
 }
 
-/** Agregar miembro por cedula + fecha de nacimiento (Presidente/Secretario del comite). */
+/** Agregar miembro por cedula + fecha de nacimiento (Coordinador/Enlace del comite). */
 async function agregarMiembroPorCedula(comiteId, { cedula, fechaNacimiento, rol }) {
   const militante = await prisma.militante.findUnique({
     where: { cedula: normalizarCedula(cedula) },
@@ -94,8 +94,8 @@ async function eliminarMiembro(comiteId, miembroId) {
   if (!miembro || miembro.comiteId !== comiteId) {
     throw new Error('Miembro no encontrado en este comite');
   }
-  if (miembro.rol === 'PRESIDENTE') {
-    throw new Error('No se puede eliminar al presidente del comite');
+  if (miembro.rol === 'COORDINADOR') {
+    throw new Error('No se puede eliminar al coordinador del comite');
   }
   return prisma.comiteMiembro.delete({ where: { id: miembroId } });
 }

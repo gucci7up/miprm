@@ -99,7 +99,7 @@ async function listarTodosMilitantes() {
 async function listarTodosComites() {
   return prisma.comiteAfectivo.findMany({
     include: {
-      presidente: { select: { nombres: true, apellidos: true, cedula: true } },
+      coordinador: { select: { nombres: true, apellidos: true, cedula: true } },
       _count: { select: { miembros: true } },
     },
     orderBy: { createdAt: 'desc' },

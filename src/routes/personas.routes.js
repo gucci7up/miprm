@@ -23,5 +23,6 @@ router.get('/validacion', requireAuth, personasController.getValidacion);
 
 router.get('/catalogos/provincias', requireAuth, personasController.getProvincias);
 router.get('/catalogos/municipios', requireAuth, personasController.getMunicipios);
+router.get('/catalogos/zonas', requireAuth, personasController.getZonas);
 
 module.exports = router;

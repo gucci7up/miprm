@@ -1,8 +1,8 @@
 const comiteId = document.querySelector('[data-comite-id]').dataset.comiteId;
-const ROL_TEXTO = { PRESIDENTE: 'Presidente', SECRETARIO: 'Secretario', MIEMBRO: 'Miembro' };
+const ROL_TEXTO = { COORDINADOR: 'Coordinador', ENLACE: 'Enlace', MIEMBRO: 'Miembro' };
 
 let miMilitanteId = null;
-let esPresidente = false;
+let esCoordinador = false;
 let esGestor = false;
 let esDigitadorOAdmin = false;
 let ultimoComite = null;
@@ -43,8 +43,18 @@ async function cargarProvinciasYMunicipios(provinciaNombreActual, municipioIdAct
   selectProvincia.addEventListener('change', cargarMunicipios);
 }
 
+async function cargarZonas(zonaIdActual) {
+  const selectZona = document.getElementById('select-zona');
+  if (!selectZona) return;
+  const { zonas } = await api('/personas/catalogos/zonas');
+  selectZona.innerHTML =
+    '<option value="">Sin especificar</option>' +
+    zonas.map((z) => `<option value="${z.ID}" data-nombre="${z.Descripcion}">${z.Descripcion}</option>`).join('');
+  if (zonaIdActual) selectZona.value = zonaIdActual;
+}
+
 function aplicarPermisos() {
-  if (!esPresidente) {
+  if (!esCoordinador) {
     document.getElementById('form-info-general').querySelectorAll('input, select, button').forEach((el) => (el.disabled = true));
   }
   if (esGestor) {
@@ -86,7 +96,7 @@ function renderMiembros(miembros) {
       <td>${m.militante.cedula}</td>
       <td><span class="badge bg-secondary">${ROL_TEXTO[m.rol] || m.rol}</span></td>
       <td>
-        ${esPresidente && m.rol !== 'PRESIDENTE' ? `<button class="btn btn-sm btn-outline-danger" data-eliminar="${m.id}">Eliminar</button>` : ''}
+        ${esCoordinador && m.rol !== 'COORDINADOR' ? `<button class="btn btn-sm btn-outline-danger" data-eliminar="${m.id}">Eliminar</button>` : ''}
       </td>
     </tr>`
     )
@@ -123,23 +133,23 @@ async function init() {
 
     const { comite } = await api(`/comites/${comiteId}`);
     ultimoComite = comite;
-    esPresidente = comite.presidenteId === miMilitanteId;
+    esCoordinador = comite.coordinadorId === miMilitanteId;
 
     const { miembros } = await api(`/comites/${comiteId}/miembros`);
     ultimosMiembros = miembros;
     const miMembresia = miembros.find((m) => m.militanteId === miMilitanteId);
-    esGestor = esPresidente || (miMembresia && miMembresia.rol === 'SECRETARIO');
+    esGestor = esCoordinador || (miMembresia && miMembresia.rol === 'ENLACE');
 
     document.getElementById('titulo-comite').textContent = comite.nombre;
     const badge = document.getElementById('badge-activo');
     badge.textContent = comite.activo ? 'Activo' : 'Inactivo';
     badge.className = `badge ${comite.activo ? 'bg-success' : 'bg-secondary'}`;
 
-    document.getElementById('presidente-nombre').textContent = comite.presidente
-      ? `${comite.presidente.nombres} ${comite.presidente.apellidos} (${comite.presidente.cedula})`
+    document.getElementById('coordinador-nombre').textContent = comite.coordinador
+      ? `${comite.coordinador.nombres} ${comite.coordinador.apellidos} (${comite.coordinador.cedula})`
       : 'Sin asignar';
     if (esDigitadorOAdmin) {
-      document.getElementById('btn-cambiar-presidente').classList.remove('d-none');
+      document.getElementById('btn-cambiar-coordinador').classList.remove('d-none');
     }
 
     document.getElementById('input-nombre').value = comite.nombre;
@@ -151,6 +161,7 @@ async function init() {
     }
 
     await cargarProvinciasYMunicipios(comite.provinciaNombre, comite.municipioId);
+    await cargarZonas(comite.zonaId);
     aplicarPermisos();
     renderMiembros(miembros);
     await cargarActividades();
@@ -169,11 +180,16 @@ document.getElementById('form-info-general').addEventListener('submit', async (e
 
   const selectProvincia = document.getElementById('select-provincia');
   const selectMunicipio = document.getElementById('select-municipio');
+  const selectZona = document.getElementById('select-zona');
   const formData = new FormData();
   formData.append('nombre', document.getElementById('input-nombre').value);
   formData.append('municipioId', selectMunicipio.value);
   formData.append('municipioNombre', selectMunicipio.options[selectMunicipio.selectedIndex]?.dataset.nombre || '');
   formData.append('provinciaNombre', selectProvincia.options[selectProvincia.selectedIndex]?.dataset.nombre || '');
+  if (selectZona.value) {
+    formData.append('zonaId', selectZona.value);
+    formData.append('zonaNombre', selectZona.options[selectZona.selectedIndex]?.dataset.nombre || '');
+  }
   formData.append('activo', document.getElementById('input-activo').checked);
   const logoInput = ev.target.querySelector('input[name="logo"]');
   if (logoInput.files[0]) formData.append('logo', logoInput.files[0]);
@@ -212,13 +228,13 @@ document.getElementById('form-miembro').addEventListener('submit', async (ev) =>
   }
 });
 
-document.getElementById('form-presidente').addEventListener('submit', async (ev) => {
+document.getElementById('form-coordinador').addEventListener('submit', async (ev) => {
   ev.preventDefault();
   ocultarError('alerta-error');
   const datos = Object.fromEntries(new FormData(ev.target).entries());
   try {
-    await api(`/comites/${comiteId}/presidente`, { method: 'PUT', body: JSON.stringify(datos) });
-    bootstrap.Modal.getInstance(document.getElementById('modalPresidente'))?.hide();
+    await api(`/comites/${comiteId}/coordinador`, { method: 'PUT', body: JSON.stringify(datos) });
+    bootstrap.Modal.getInstance(document.getElementById('modalCoordinador'))?.hide();
     ev.target.reset();
     init();
   } catch (err) {
@@ -226,25 +242,45 @@ document.getElementById('form-presidente').addEventListener('submit', async (ev)
   }
 });
 
-document.getElementById('btn-imprimir').addEventListener('click', () => {
-  if (!ultimoComite) return;
+document.getElementById('btn-imprimir').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-imprimir');
+  btn.disabled = true;
+  try {
+    const { comite, miembros } = await api(`/comites/${comiteId}/imprimir-datos`);
 
-  document.getElementById('print-nombre').textContent = ultimoComite.nombre;
-  document.getElementById('print-municipio').textContent =
-    `${ultimoComite.municipioNombre}${ultimoComite.provinciaNombre ? ', ' + ultimoComite.provinciaNombre : ''}`;
-  document.getElementById('print-fecha').textContent = formatearFecha(ultimoComite.createdAt);
-  document.getElementById('print-presidente').textContent = ultimoComite.presidente
-    ? `${ultimoComite.presidente.nombres} ${ultimoComite.presidente.apellidos} (${ultimoComite.presidente.cedula})`
-    : 'Sin asignar';
-  document.getElementById('print-miembros').innerHTML = ultimosMiembros
-    .map((m) => `<tr><td>${m.militante.nombres} ${m.militante.apellidos}</td><td>${m.militante.cedula}</td><td>${ROL_TEXTO[m.rol] || m.rol}</td></tr>`)
-    .join('');
+    document.getElementById('print-nombre').textContent = comite.nombre;
+    document.getElementById('print-provincia').textContent = comite.provinciaNombre || '—';
+    document.getElementById('print-municipio').textContent = comite.municipioNombre || '—';
+    document.getElementById('print-zona').textContent = comite.zonaNombre || '—';
+    document.getElementById('print-fecha').textContent = formatearFecha(comite.createdAt);
 
-  const original = document.body.innerHTML;
-  document.body.innerHTML = `<div style="padding:20px;">${document.getElementById('seccion-imprimir').innerHTML}</div>`;
-  window.print();
-  document.body.innerHTML = original;
-  window.location.reload();
+    document.getElementById('print-miembros').innerHTML = miembros
+      .map(
+        (m) => `
+      <div class="print-card">
+        <div class="print-card-rol">${ROL_TEXTO[m.rol] || m.rol}</div>
+        <div class="print-card-body">
+          <img class="print-card-foto" src="${m.fotoBase64 ? 'data:image/jpeg;base64,' + m.fotoBase64 : ''}" onerror="this.style.visibility='hidden'" />
+          <div>
+            <div class="print-card-cedula">${m.cedula}${m.codigoColegio ? ' — Colegio ' + m.codigoColegio : ''}</div>
+            <div class="print-card-nombre">${m.nombres} ${m.apellidos}</div>
+            <div class="print-card-detalle">${m.telefono || ''}</div>
+            <div class="print-card-detalle">${m.recinto ? 'Recinto ' + m.recinto : ''}${m.circunscripcion ? ', ' + m.circunscripcion + ' Circunscripcion' : ''}${m.municipio ? ', ' + m.municipio : ''}</div>
+          </div>
+        </div>
+      </div>`
+      )
+      .join('');
+
+    const original = document.body.innerHTML;
+    document.body.innerHTML = `<div style="padding:20px;">${document.getElementById('seccion-imprimir').innerHTML}</div>`;
+    window.print();
+    document.body.innerHTML = original;
+    window.location.reload();
+  } catch (err) {
+    mostrarError('alerta-error', err.message);
+    btn.disabled = false;
+  }
 });
 
 init();

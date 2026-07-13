@@ -102,9 +102,65 @@ async function listarMunicipiosPorProvincia(idProvincia) {
   return result.recordset;
 }
 
+/** Catalogo de zonas, para el selector de creacion/edicion de comite. */
+async function listarZonas() {
+  const pool = await getPool();
+  const result = await pool
+    .request()
+    .query(`SELECT ID, Descripcion FROM [${DB_PADRON}].[dbo].[Zona] ORDER BY Descripcion`);
+  return result.recordset;
+}
+
+/**
+ * Datos completos de una persona para la plantilla de impresion de comite:
+ * foto (de dbPRM.FOTOS_PRM_PRM), colegio y recinto de votacion, ademas de
+ * lo basico. LEFT JOIN en todo porque no todos los militantes van a tener
+ * foto/colegio/recinto cargados en el padron.
+ */
+async function buscarDatosImpresion(cedula) {
+  const pool = await getPool();
+  const result = await pool
+    .request()
+    .input('cedula', sql.VarChar(20), cedula)
+    .query(`
+      SELECT
+        P.nombres,
+        P.apellido1,
+        P.apellido2,
+        P.Cedula,
+        Mun.Descripcion AS Municipio,
+        Prov.Descripcion AS Provincia,
+        Cir.Descripcion AS Circunscripcion,
+        Col.Descripcion AS Colegio,
+        Col.CodigoColegio,
+        Rec.Descripcion AS Recinto,
+        Rec.Direccion AS RecintoDireccion,
+        Foto.Imagen
+      FROM [${DB_PADRON}].[dbo].[Padron] P
+      LEFT JOIN [${DB_PADRON}].[dbo].[Municipio] Mun ON P.IdMunicipio = Mun.ID
+      LEFT JOIN [${DB_PADRON}].[dbo].[Provincia] Prov ON P.IdProvincia = Prov.ID
+      LEFT JOIN [${DB_PADRON}].[dbo].[Circunscripcion] Cir ON P.CodigoCircunscripcion = Cir.CodigoCircunscripcion
+      LEFT JOIN [${DB_PADRON}].[dbo].[Colegio] Col ON P.IdColegio = Col.IDColegio
+      LEFT JOIN [${DB_PADRON}].[dbo].[Recinto] Rec ON P.CodigoRecinto = Rec.CodigoRecinto
+      LEFT JOIN [${DB_PRM}].[dbo].[FOTOS_PRM_PRM] Foto ON P.Cedula = Foto.Cedula
+      WHERE P.Cedula = @cedula
+    `);
+
+  const row = result.recordset[0];
+  if (!row) return null;
+
+  return {
+    ...row,
+    ImagenBase64: row.Imagen ? Buffer.from(row.Imagen).toString('base64') : null,
+    Imagen: undefined,
+  };
+}
+
 module.exports = {
   buscarPorCedulaYFechaNacimiento,
   buscarPorCedula,
   listarProvincias,
   listarMunicipiosPorProvincia,
+  listarZonas,
+  buscarDatosImpresion,
 };

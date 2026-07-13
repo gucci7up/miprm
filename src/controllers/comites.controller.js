@@ -1,10 +1,11 @@
 const comiteService = require('../services/comites/comite.service');
 const comiteMiembroService = require('../services/comites/comiteMiembro.service');
 const comiteActividadService = require('../services/comites/comiteActividad.service');
+const padronService = require('../services/padron/padronService');
 
 async function postComite(req, res, next) {
   try {
-    const { nombre, municipioId, municipioNombre, provinciaNombre } = req.body;
+    const { nombre, municipioId, municipioNombre, provinciaNombre, zonaId, zonaNombre } = req.body;
     if (!nombre || !municipioId || !municipioNombre) {
       return res.status(400).json({ error: 'Nombre y municipio son obligatorios' });
     }
@@ -15,6 +16,8 @@ async function postComite(req, res, next) {
       municipioId: parseInt(municipioId, 10),
       municipioNombre,
       provinciaNombre,
+      zonaId,
+      zonaNombre,
       logo: logoFile ? logoFile.buffer : null,
       logoMimeType: logoFile ? logoFile.mimetype : null,
     });
@@ -25,8 +28,8 @@ async function postComite(req, res, next) {
   }
 }
 
-/** PUT /comites/:id/presidente — asigna o reemplaza al presidente (digitador/admin). */
-async function putPresidente(req, res, next) {
+/** PUT /comites/:id/coordinador — asigna o reemplaza al coordinador (digitador/admin). */
+async function putCoordinador(req, res, next) {
   try {
     const comiteId = parseInt(req.params.id, 10);
     const { cedula, fechaNacimiento } = req.body;
@@ -34,7 +37,7 @@ async function putPresidente(req, res, next) {
       return res.status(400).json({ error: 'Cedula y fecha de nacimiento son obligatorias' });
     }
 
-    const comite = await comiteService.asignarPresidente(comiteId, { cedula, fechaNacimiento });
+    const comite = await comiteService.asignarCoordinador(comiteId, { cedula, fechaNacimiento });
     return res.json({ comite: { ...comite, logo: undefined } });
   } catch (err) {
     if (err instanceof comiteMiembroService.MilitanteNoEncontradoError) {
@@ -68,7 +71,7 @@ async function getLogo(req, res, next) {
 async function putInfoGeneral(req, res, next) {
   try {
     const comiteId = parseInt(req.params.id, 10);
-    const { nombre, municipioId, municipioNombre, provinciaNombre, activo } = req.body;
+    const { nombre, municipioId, municipioNombre, provinciaNombre, zonaId, zonaNombre, activo } = req.body;
     const logoFile = req.file;
 
     const comite = await comiteService.actualizarInfoGeneral(comiteId, {
@@ -76,6 +79,8 @@ async function putInfoGeneral(req, res, next) {
       municipioId: municipioId ? parseInt(municipioId, 10) : undefined,
       municipioNombre,
       provinciaNombre,
+      zonaId,
+      zonaNombre,
       activo: activo !== undefined ? activo === 'true' || activo === true : undefined,
       logo: logoFile ? logoFile.buffer : undefined,
       logoMimeType: logoFile ? logoFile.mimetype : undefined,
@@ -116,8 +121,8 @@ async function postMiembro(req, res, next) {
     const comiteId = parseInt(req.params.id, 10);
     const { cedula, fechaNacimiento, rol } = req.body;
 
-    if (!cedula || !fechaNacimiento || !['SECRETARIO', 'MIEMBRO'].includes(rol)) {
-      return res.status(400).json({ error: 'Cedula, fecha de nacimiento y rol (Secretario o Miembro) son obligatorios' });
+    if (!cedula || !fechaNacimiento || !['ENLACE', 'MIEMBRO'].includes(rol)) {
+      return res.status(400).json({ error: 'Cedula, fecha de nacimiento y rol (Enlace o Miembro) son obligatorios' });
     }
 
     const miembro = await comiteMiembroService.agregarMiembroPorCedula(comiteId, { cedula, fechaNacimiento, rol });
@@ -214,9 +219,52 @@ async function getActividadImagen(req, res, next) {
   }
 }
 
+/**
+ * GET /comites/:id/imprimir-datos — arma los datos para la plantilla de
+ * impresion: info del comite + coordinador + cada miembro enriquecido con
+ * foto/colegio/recinto/circunscripcion desde el padron externo.
+ */
+async function getDatosImpresion(req, res, next) {
+  try {
+    const comiteId = parseInt(req.params.id, 10);
+    const comite = await comiteService.obtenerComite(comiteId);
+    if (!comite) return res.status(404).json({ error: 'Comite no encontrado' });
+
+    const miembros = await comiteMiembroService.listarMiembros(comiteId);
+
+    const miembrosEnriquecidos = await Promise.all(
+      miembros.map(async (m) => {
+        const datosPadron = await padronService.buscarDatosImpresion(m.militante.cedula).catch(() => null);
+        return {
+          rol: m.rol,
+          nombres: m.militante.nombres,
+          apellidos: m.militante.apellidos,
+          cedula: m.militante.cedula,
+          telefono: m.militante.telefono,
+          municipio: datosPadron?.Municipio || null,
+          provincia: datosPadron?.Provincia || null,
+          circunscripcion: datosPadron?.Circunscripcion || null,
+          colegio: datosPadron?.Colegio || null,
+          codigoColegio: datosPadron?.CodigoColegio || null,
+          recinto: datosPadron?.Recinto || null,
+          recintoDireccion: datosPadron?.RecintoDireccion || null,
+          fotoBase64: datosPadron?.ImagenBase64 || null,
+        };
+      })
+    );
+
+    return res.json({
+      comite: { ...comite, logo: undefined },
+      miembros: miembrosEnriquecidos,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   postComite,
-  putPresidente,
+  putCoordinador,
   getComite,
   getLogo,
   putInfoGeneral,
@@ -229,4 +277,5 @@ module.exports = {
   postActividad,
   getActividades,
   getActividadImagen,
+  getDatosImpresion,
 };

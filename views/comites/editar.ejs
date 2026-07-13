@@ -17,9 +17,9 @@
     </div>
 
     <div class="mb-3 d-flex align-items-center gap-2">
-      <span class="text-muted small">Presidente:</span>
-      <strong id="presidente-nombre">Sin asignar</strong>
-      <button class="btn btn-sm btn-outline-primary d-none" id="btn-cambiar-presidente" data-bs-toggle="modal" data-bs-target="#modalPresidente">
+      <span class="text-muted small">Coordinador:</span>
+      <strong id="coordinador-nombre">Sin asignar</strong>
+      <button class="btn btn-sm btn-outline-primary d-none" id="btn-cambiar-coordinador" data-bs-toggle="modal" data-bs-target="#modalCoordinador">
         Asignar / cambiar
       </button>
     </div>
@@ -40,13 +40,17 @@
               <input type="text" class="form-control" name="nombre" id="input-nombre" />
             </div>
             <div class="row g-3 mb-3">
-              <div class="col-md-6">
+              <div class="col-md-4">
                 <label class="form-label">Provincia</label>
                 <select class="form-select" id="select-provincia"></select>
               </div>
-              <div class="col-md-6">
+              <div class="col-md-4">
                 <label class="form-label">Municipio</label>
                 <select class="form-select" id="select-municipio"></select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Zona</label>
+                <select class="form-select" id="select-zona"></select>
               </div>
             </div>
             <div class="mb-3">
@@ -112,7 +116,7 @@
             <div class="col-md-3">
               <label class="form-label">Rol</label>
               <select class="form-select" name="rol" required>
-                <option value="SECRETARIO">Secretario</option>
+                <option value="ENLACE">Enlace</option>
                 <option value="MIEMBRO">Miembro</option>
               </select>
             </div>
@@ -130,30 +134,43 @@
 
     <!-- Seccion imprimible (oculta, se usa solo al imprimir) -->
     <div class="d-none" id="seccion-imprimir">
-      <div style="text-align:center;margin-bottom:24px;">
-        <h2 style="margin:0;font-size:18px;">MIPRM</h2>
-        <h3 style="font-size:14px;font-weight:normal;">Comité Afectivo</h3>
+      <style>
+        .print-header { text-align:center; margin-bottom:16px; }
+        .print-info { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px 24px; border:1px solid #ccc; border-radius:8px; padding:10px 16px; margin-bottom:16px; font-size:12px; }
+        .print-info div { min-width:140px; }
+        .print-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+        .print-card { border:1px solid #999; border-radius:6px; overflow:hidden; }
+        .print-card-rol { background:#eee; font-size:10px; font-weight:700; text-transform:uppercase; padding:3px 8px; }
+        .print-card-body { display:flex; gap:8px; padding:8px; }
+        .print-card-foto { width:56px; height:56px; object-fit:cover; border-radius:4px; background:#ddd; flex-shrink:0; }
+        .print-card-cedula { font-size:11px; color:#555; }
+        .print-card-nombre { font-size:12px; font-weight:700; }
+        .print-card-detalle { font-size:10px; color:#555; }
+      </style>
+      <div class="print-header">
+        <h2 style="margin:0;font-size:16px;">MIPRM</h2>
+        <h3 style="font-size:12px;font-weight:normal;margin:2px 0;">Comité Afectivo</h3>
       </div>
-      <p><strong>Nombre:</strong> <span id="print-nombre"></span></p>
-      <p><strong>Municipio:</strong> <span id="print-municipio"></span></p>
-      <p><strong>Fecha de creación:</strong> <span id="print-fecha"></span></p>
-      <p><strong>Presidente:</strong> <span id="print-presidente"></span></p>
-      <table border="1" width="100%" style="border-collapse:collapse;margin-top:16px;">
-        <thead><tr><th>Nombre</th><th>Cédula</th><th>Rol</th></tr></thead>
-        <tbody id="print-miembros"></tbody>
-      </table>
+      <div class="print-info">
+        <div><strong>Comité:</strong> <span id="print-nombre"></span></div>
+        <div><strong>Provincia:</strong> <span id="print-provincia"></span></div>
+        <div><strong>Municipio / DM:</strong> <span id="print-municipio"></span></div>
+        <div><strong>Zona:</strong> <span id="print-zona"></span></div>
+        <div><strong>Fecha:</strong> <span id="print-fecha"></span></div>
+      </div>
+      <div class="print-grid" id="print-miembros"></div>
     </div>
   </div>
 
-  <!-- Modal asignar/cambiar presidente -->
-  <div class="modal fade" id="modalPresidente" tabindex="-1">
+  <!-- Modal asignar/cambiar coordinador -->
+  <div class="modal fade" id="modalCoordinador" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Asignar / cambiar presidente</h5>
+          <h5 class="modal-title">Asignar / cambiar coordinador</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <form id="form-presidente">
+        <form id="form-coordinador">
           <div class="modal-body">
             <div class="mb-3">
               <label class="form-label">Cédula</label>

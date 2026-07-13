@@ -1,4 +1,4 @@
-const ROL_TEXTO = { PRESIDENTE: 'Presidente', SECRETARIO: 'Secretario', MIEMBRO: 'Miembro' };
+const ROL_TEXTO = { COORDINADOR: 'Coordinador', ENLACE: 'Enlace', MIEMBRO: 'Miembro' };
 
 function tarjetaMiComite(membresia) {
   const c = membresia.comite;
@@ -21,7 +21,7 @@ function tarjetaDisponible(comite) {
       <div class="card p-3 h-100">
         <h6 class="mb-1">${comite.nombre}</h6>
         <p class="text-muted small mb-2">${comite.municipioNombre}${comite.provinciaNombre ? ', ' + comite.provinciaNombre : ''}</p>
-        <p class="small mb-3">${comite._count ? comite._count.miembros : 0} miembros · Presidente: ${comite.presidente.nombres} ${comite.presidente.apellidos}</p>
+        <p class="small mb-3">${comite._count ? comite._count.miembros : 0} miembros · Coordinador: ${comite.coordinador ? `${comite.coordinador.nombres} ${comite.coordinador.apellidos}` : 'Sin asignar'}</p>
         <button class="btn btn-outline-success btn-sm mt-auto" data-afiliarme="${comite.id}">Afiliarme a este comité</button>
       </div>
     </div>`;

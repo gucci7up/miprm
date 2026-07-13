@@ -163,6 +163,16 @@ async function getMunicipios(req, res, next) {
   }
 }
 
+/** GET /personas/catalogos/zonas */
+async function getZonas(req, res, next) {
+  try {
+    const zonas = await padronService.listarZonas();
+    return res.json({ zonas });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getConsultar,
   putPerfil,
@@ -172,4 +182,5 @@ module.exports = {
   getValidacion,
   getProvincias,
   getMunicipios,
+  getZonas,
 };

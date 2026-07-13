@@ -25,8 +25,8 @@ enum EstadoMilitante {
 }
 
 enum RolComite {
-  PRESIDENTE
-  SECRETARIO
+  COORDINADOR
+  ENLACE
   MIEMBRO
 }
 
@@ -69,9 +69,9 @@ model Militante {
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
-  comitesPresididos ComiteAfectivo[]      @relation("PresidenteComite")
-  membresias        ComiteMiembro[]
-  validaciones      ValidacionIdentidad[]
+  comitesCoordinados ComiteAfectivo[]      @relation("CoordinadorComite")
+  membresias         ComiteMiembro[]
+  validaciones       ValidacionIdentidad[]
 
   @@map("militantes")
 }
@@ -85,14 +85,15 @@ model ComiteAfectivo {
   municipioId     Int
   municipioNombre String
   provinciaNombre String?
+  zonaId          String?
+  zonaNombre      String?
   logo            Bytes?
   logoMimeType    String?
   activo          Boolean    @default(true)
   // Opcional: el comite se crea primero (nombre + municipio) y el
-  // presidente se asigna despues, igual que el patron de "coordinador"
-  // del sistema de referencia.
-  presidenteId    Int?
-  presidente      Militante? @relation("PresidenteComite", fields: [presidenteId], references: [id])
+  // coordinador se asigna despues, como en el sistema de referencia.
+  coordinadorId   Int?
+  coordinador     Militante? @relation("CoordinadorComite", fields: [coordinadorId], references: [id])
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
@@ -114,10 +115,10 @@ model ComiteMiembro {
 
   // Un militante no puede repetirse en el mismo comite.
   @@unique([comiteId, militanteId])
-  // Regla de negocio "solo 1 comite adicional con rol Secretario/Miembro" se
+  // Regla de negocio "solo 1 comite adicional con rol Enlace/Miembro" se
   // valida en el backend (ver src/services/comites/comiteMiembro.service.js);
   // ademas se refuerza con un indice unico parcial creado a mano en la
-  // migracion SQL (solo permite una fila con rol IN (SECRETARIO, MIEMBRO)
+  // migracion SQL (solo permite una fila con rol IN (ENLACE, MIEMBRO)
   // por militante, sin importar el comite).
   @@map("comite_miembros")
 }

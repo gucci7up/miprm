@@ -40,6 +40,7 @@ document.getElementById('form-registrar').addEventListener('submit', async (ev) 
 // --- Crear comite ---
 const selectProvincia = document.getElementById('select-provincia');
 const selectMunicipio = document.getElementById('select-municipio');
+const selectZona = document.getElementById('select-zona');
 
 async function cargarProvincias() {
   try {
@@ -51,6 +52,17 @@ async function cargarProvincias() {
     if (err.status === 401) window.location.href = '/iniciar-sesion';
     else if (err.status === 403) mostrarError('alerta-error', 'No tienes permisos de digitador/admin.');
     else mostrarError('alerta-error', err.message);
+  }
+}
+
+async function cargarZonas() {
+  try {
+    const { zonas } = await api('/personas/catalogos/zonas');
+    selectZona.innerHTML =
+      '<option value="">Sin especificar</option>' +
+      zonas.map((z) => `<option value="${z.ID}">${z.Descripcion}</option>`).join('');
+  } catch (err) {
+    // silencioso: la zona es opcional, no bloquea el resto del formulario
   }
 }
 
@@ -91,6 +103,10 @@ document.getElementById('form-crear-comite').addEventListener('submit', async (e
   formData.append('municipioId', municipioId);
   formData.append('municipioNombre', municipioNombre);
   formData.append('provinciaNombre', provinciaNombre);
+  if (selectZona.value) {
+    formData.append('zonaId', selectZona.value);
+    formData.append('zonaNombre', selectZona.options[selectZona.selectedIndex]?.text);
+  }
 
   const btn = document.getElementById('btn-submit-comite');
   btn.disabled = true;
@@ -111,3 +127,4 @@ document.getElementById('form-crear-comite').addEventListener('submit', async (e
 });
 
 cargarProvincias();
+cargarZonas();

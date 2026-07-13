@@ -94,7 +94,7 @@ async function cargarComitesAdmin() {
           <span class="badge ${c.activo ? 'bg-success' : 'bg-secondary'}">${c.activo ? 'Activo' : 'Inactivo'}</span>
         </div>
         <p class="small text-muted mb-1">${c.municipioNombre}${c.provinciaNombre ? ', ' + c.provinciaNombre : ''}</p>
-        <p class="small mb-0">Presidente: ${c.presidente.nombres} ${c.presidente.apellidos} · ${c._count.miembros} miembros</p>
+        <p class="small mb-0">Coordinador: ${c.coordinador ? `${c.coordinador.nombres} ${c.coordinador.apellidos}` : 'Sin asignar'} · ${c._count.miembros} miembros</p>
       </div>
     </div>`
       )
