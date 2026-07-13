@@ -105,8 +105,12 @@ async function init() {
   try {
     await Promise.all([cargarStats(), cargarValidaciones(), cargarComitesAdmin()]);
   } catch (err) {
-    if (err.status === 401 || err.status === 403) {
+    if (err.status === 401) {
       window.location.href = '/iniciar-sesion';
+      return;
+    }
+    if (err.status === 403) {
+      mostrarError('alerta-error', 'No tienes permisos de administrador para ver esta pagina.');
       return;
     }
     mostrarError('alerta-error', err.message);
