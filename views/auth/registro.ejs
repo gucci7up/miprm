@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body>
+  <%- include('../partials/nav') %>
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card p-4 p-md-5">
+          <h2 class="mb-1">Inscríbete</h2>
+          <p class="text-muted mb-4">Completa tus datos para afiliarte. Te enviaremos tu contraseña de acceso.</p>
+
+          <div id="alerta-exito" class="alert alert-success d-none"></div>
+          <div id="alerta-error" class="alert alert-danger d-none"></div>
+
+          <form id="form-registro">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Cédula *</label>
+                <input type="text" class="form-control" name="cedula" maxlength="11" placeholder="00000000000" required />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Alias (opcional)</label>
+                <input type="text" class="form-control" name="alias" />
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Nombres *</label>
+                <input type="text" class="form-control" name="nombres" required />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Apellidos *</label>
+                <input type="text" class="form-control" name="apellidos" required />
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Teléfono *</label>
+                <input type="text" class="form-control" name="telefono" required />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">WhatsApp</label>
+                <input type="text" class="form-control" name="whatsapp" />
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">¿Qué te motivó a afiliarte?</label>
+                <textarea class="form-control" name="motivacion" rows="2"></textarea>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Correo electrónico (opcional)</label>
+                <input type="email" class="form-control" name="email" />
+                <div class="form-text">Si no lo llenas, te enviaremos la contraseña por SMS.</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Confirmar correo</label>
+                <input type="email" class="form-control" name="confirmarEmail" />
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Fecha de nacimiento</label>
+                <input type="date" class="form-control" name="fechaNacimiento" />
+              </div>
+
+              <div class="col-12"><hr /></div>
+
+              <div class="col-md-6">
+                <label class="form-label">Calle</label>
+                <input type="text" class="form-control" name="calle" />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Número de casa</label>
+                <input type="text" class="form-control" name="numeroCasa" />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Sector / barrio</label>
+                <input type="text" class="form-control" name="sector" />
+              </div>
+
+              <div class="col-12"><hr /></div>
+
+              <div class="col-md-6">
+                <label class="form-label">Contacto secundario — nombre</label>
+                <input type="text" class="form-control" name="contactoNombre" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Contacto secundario — teléfono</label>
+                <input type="text" class="form-control" name="contactoTelefono" />
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-4" id="btn-submit">Inscribirme</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/public/js/api.js"></script>
+  <script src="/public/js/nav.js"></script>
+  <script src="/public/js/registro.js"></script>
+</body>
+</html>

@@ -6,6 +6,7 @@ const pgSession = require('connect-pg-simple')(session);
 const env = require('./config/env');
 const pgPool = require('./lib/pgPool');
 
+const pagesRoutes = require('./routes/pages.routes');
 const authRoutes = require('./routes/auth.routes');
 const personasRoutes = require('./routes/personas.routes');
 const comitesRoutes = require('./routes/comites.routes');
@@ -40,10 +41,7 @@ app.use(
 
 app.use('/public', express.static(path.join(__dirname, '..', 'public')));
 
-app.get('/', (req, res) => {
-  res.render('home');
-});
-
+app.use('/', pagesRoutes);
 app.use('/auth', authRoutes);
 app.use('/personas', personasRoutes);
 app.use('/comites', comitesRoutes);
