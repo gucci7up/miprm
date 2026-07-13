@@ -1,6 +1,10 @@
 const router = require('express').Router();
+const personasController = require('../controllers/personas.controller');
+const { requireAuth, requireValidado } = require('../middleware/auth.middleware');
 
-// TODO: implementar en la Fase 3 (API REST) una vez confirmado el esquema de BD
-router.get('/_status', (req, res) => res.json({ module: 'personas', status: 'pending' }));
+router.get('/consultar', personasController.getConsultar);
+router.put('/perfil', requireAuth, personasController.putPerfil);
+router.get('/padron/:cedula', requireAuth, requireValidado, personasController.getPadron);
+router.post('/afiliar', requireAuth, requireValidado, personasController.postAfiliar);
 
 module.exports = router;
