@@ -33,7 +33,7 @@ async function buscarPorCedulaYFechaNacimiento(cedula, fechaNacimiento) {
         Nac.Descripcion AS Nacionalidad
       FROM [${DB_PADRON}].[dbo].[Padron] P
       INNER JOIN [${DB_PADRON}].[dbo].[Municipio] Mun ON P.IdMunicipio = Mun.ID
-      LEFT JOIN [${DB_PADRON}].[dbo].[Circunscripcion] Cir ON P.CodigoCircunscripcion = Cir.ID
+      LEFT JOIN [${DB_PADRON}].[dbo].[Circunscripcion] Cir ON P.CodigoCircunscripcion = Cir.CodigoCircunscripcion
       LEFT JOIN [${DB_PADRON}].[dbo].[Sexo] Sex ON P.IdSexo = Sex.IdSexo
       LEFT JOIN [${DB_PADRON}].[dbo].[EstadoCivil] EC ON P.IdEstadoCivil = EC.Id
       LEFT JOIN [${DB_PADRON}].[dbo].[Nacionalidad] Nac ON P.IdNacionalidad = Nac.ID
@@ -83,17 +83,22 @@ async function listarProvincias() {
 }
 
 /**
- * Catalogo de municipios de una provincia, para el selector de creacion de comite.
- * TODO: verificar que Municipio.IdProvincia es el nombre real de la columna FK
- * una vez tengamos el resultado de las queries de INFORMATION_SCHEMA sobre
- * la BD de padron (ver Tarea #1) — se ajusta si el nombre real es distinto.
+ * Catalogo de municipios (y distritos municipales) de una provincia, para el
+ * selector de creacion de comite. Se incluye DM e IDMunicipioPadre: si
+ * IDMunicipioPadre === ID, la fila es un municipio cabecera; si apunta a
+ * otro municipio y DM esta marcado, es un distrito municipal de ese municipio.
  */
 async function listarMunicipiosPorProvincia(idProvincia) {
   const pool = await getPool();
   const result = await pool
     .request()
     .input('idProvincia', sql.Int, idProvincia)
-    .query(`SELECT ID, Descripcion FROM [${DB_PADRON}].[dbo].[Municipio] WHERE IdProvincia = @idProvincia ORDER BY Descripcion`);
+    .query(`
+      SELECT ID, Descripcion, IDMunicipioPadre, DM
+      FROM [${DB_PADRON}].[dbo].[Municipio]
+      WHERE IDProvincia = @idProvincia
+      ORDER BY Descripcion
+    `);
   return result.recordset;
 }
 
